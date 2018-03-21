@@ -197,14 +197,15 @@ public class MainActivity extends AppCompatActivity {
                 mSourcePath.setText(filename);
 
             }
-        } else if (requestCode == REQUEST_CODE_OPEN_DIRECTORY && resultCode == Activity.RESULT_OK) {
-            //Log.d("URI", String.format("Open Directory result Uri : %s", data.getData()));
-            if (resultData != null) {
-                uri = resultData.getData();
-
-                mTargetPath.setText("/storage/");
-            }
         }
+//        else if (requestCode == REQUEST_CODE_OPEN_DIRECTORY && resultCode == Activity.RESULT_OK) {
+//            //This function has been removed.
+//            //Log.d("URI", String.format("Open Directory result Uri : %s", data.getData()));
+//            if (resultData != null) {
+//                uri = resultData.getData();
+//                mTargetPath.setText("/storage/");
+//            }
+//        }
     }
 
 
