@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private Button mEncrypt;
     private Button mDecrypt;
     private EditText mSourcePath;
-    private EditText mTargetPath;
+    private EditText mPasswordText;
     private static final int READ_REQUEST_CODE = 42;
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
     private Crypt crypt = new Crypt();
@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         mMerge = findViewById(R.id.buttonMerge);
         mSplit = findViewById(R.id.buttonSplit);
         mSourcePath = findViewById(R.id.sourceText);
-        mTargetPath = findViewById(R.id.targetText);
+        mPasswordText = findViewById(R.id.passwordText);
         mEncrypt = findViewById(R.id.buttonEncrypt);
         mDecrypt = findViewById(R.id.buttonDecrypt);
 
