@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         mMerge.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                
+
             }
         });
 
