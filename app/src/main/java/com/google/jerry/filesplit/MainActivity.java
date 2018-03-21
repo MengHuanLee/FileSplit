@@ -20,28 +20,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.security.AlgorithmParameters;
-import java.security.SecureRandom;
-import java.security.spec.KeySpec;
-
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
-
 
 public class MainActivity extends AppCompatActivity {
 
     private Button mSelectSource;
-    private Button mSelectTarget;
+    private Button mMerge;
     private Button mSplit;
     private Button mEncrypt;
     private Button mDecrypt;
@@ -50,9 +33,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int READ_REQUEST_CODE = 42;
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
     private Crypt crypt = new Crypt();
+    private FileHandler fileHandle = new FileHandler();
 
     private String filename;
-    public static long chunkSize = (long)(1.4 * 1024);
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mSelectSource = findViewById(R.id.buttonSource);
-        mSelectTarget = findViewById(R.id.buttonTarget);
+        mMerge = findViewById(R.id.buttonMerge);
         mSplit = findViewById(R.id.buttonSplit);
         mSourcePath = findViewById(R.id.sourceText);
         mTargetPath = findViewById(R.id.targetText);
@@ -88,11 +72,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 try {
-                    split(filename);
+                    fileHandle.split(filename);
                 } catch (Exception e){
                     Log.e("File", e.getMessage());
                     Toast.makeText(getBaseContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        mMerge.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                
             }
         });
 
@@ -216,51 +207,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public static void split(String filename) throws IOException
-    {
-        // open the file
-        BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
 
-        // get the file length
-        File f = new File(filename);
-        long fileSize = f.length();
-
-        // loop for each full chunk
-        int subfile;
-        for (subfile = 0; subfile < fileSize / chunkSize; subfile++)
-        {
-            // open the output file
-            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename + "." + subfile));
-
-            // write the right amount of bytes
-            for (int currentByte = 0; currentByte < chunkSize; currentByte++)
-            {
-                // load one byte from the input file and write it to the output file
-                out.write(in.read());
-            }
-
-            // close the file
-            out.close();
-        }
-
-        // loop for the last chunk (which may be smaller than the chunk size)
-        if (fileSize != chunkSize * (subfile - 1))
-        {
-            // open the output file
-            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename + "." + subfile));
-
-            // write the rest of the file
-            int b;
-            while ((b = in.read()) != -1)
-                out.write(b);
-
-            // close the file
-            out.close();
-        }
-
-        // close the file
-        in.close();
-    }
 
     public static String getPath(final Context context, final Uri uri) {
 
