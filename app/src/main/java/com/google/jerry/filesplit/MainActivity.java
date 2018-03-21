@@ -1,6 +1,7 @@
 package com.google.jerry.filesplit;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -25,6 +26,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.AlgorithmParameters;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -32,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private Button mSelectSource;
     private Button mSelectTarget;
     private Button mSplit;
+    private Button mEncrypt;
+    private Button mDecrypt;
     private EditText mSourcePath;
     private EditText mTargetPath;
     private static final int READ_REQUEST_CODE = 42;
@@ -50,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
         mSplit = findViewById(R.id.buttonSplit);
         mSourcePath = findViewById(R.id.sourceText);
         mTargetPath = findViewById(R.id.targetText);
+        mEncrypt = findViewById(R.id.buttonEncrypt);
+        mDecrypt = findViewById(R.id.buttonDecrypt);
 
         mSelectSource.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -60,13 +75,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mSelectTarget.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                performFolderSelect();
-            }
-        });
+//        mSelectTarget.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//                performFolderSelect();
+//            }
+//        });
 
         mSplit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,7 +95,62 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mEncrypt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new EncryptInBG().execute(filename);
+                Log.i("Encrypt", "Doing encryption in background");
+                Toast.makeText(getBaseContext(),"Encrypting file...",Toast.LENGTH_LONG).show();
+            }
+        });
 
+        mDecrypt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new DecryptInBG().execute(filename);
+                Log.i("Decrypt", "Doing decryption in background");
+                Toast.makeText(getBaseContext(),"Decrypting file...",Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private class EncryptInBG extends AsyncTask<String, Void, Void>{
+
+        @Override
+        protected Void doInBackground(String... filename) {
+            try {
+                AESFileEncrypt(filename[0]);
+            } catch (Exception e){
+                Log.e("File", e.getMessage());
+                // Caused by: java.lang.RuntimeException: Can't create handler inside thread that has not called Looper.prepare()
+                //Toast.makeText(getBaseContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Toast.makeText(getBaseContext(),"Encryption completed.",Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private class DecryptInBG extends AsyncTask<String, Void, Void>{
+        @Override
+        protected Void doInBackground(String... filename) {
+            try {
+                AESFileDecryption(filename[0]);
+            } catch (Exception e){
+                Log.e("File", e.getMessage());
+                // Caused by: java.lang.RuntimeException: Can't create handler inside thread that has not called Looper.prepare()
+                //Toast.makeText(getBaseContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Toast.makeText(getBaseContext(),"Decryption completed.",Toast.LENGTH_LONG).show();
+        }
     }
 
     public void performFileSearch() {
@@ -102,15 +172,15 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
 
-    public void performFolderSelect() {
-
-
-
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        //intent.addCategory(Intent.CATEGORY_OPENABLE);
-        //intent.setType(DocumentsContract.Document.MIME_TYPE_DIR);
-        startActivityForResult(intent, REQUEST_CODE_OPEN_DIRECTORY);
-    }
+//    public void performFolderSelect() {
+//
+//
+//
+//        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+//        //intent.addCategory(Intent.CATEGORY_OPENABLE);
+//        //intent.setType(DocumentsContract.Document.MIME_TYPE_DIR);
+//        startActivityForResult(intent, REQUEST_CODE_OPEN_DIRECTORY);
+//    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode,
@@ -342,6 +412,119 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    public void AESFileEncrypt(String filename) throws Exception{
+        // file to be encrypted
+        FileInputStream inFile = new FileInputStream(filename);
+
+        // encrypted file
+        FileOutputStream outFile = new FileOutputStream(filename + ".encryptedfile.des");
+
+        // password to encrypt the file
+        String password = "javapapers";
+
+        // password, iv and salt should be transferred to the other end
+        // in a secure manner
+
+        // salt is used for encoding
+        // writing it to a file
+        // salt should be transferred to the recipient securely
+        // for decryption
+        byte[] salt = new byte[8];
+        SecureRandom secureRandom = new SecureRandom();
+        secureRandom.nextBytes(salt);
+        FileOutputStream saltOutFile = new FileOutputStream(filename + ".salt.enc");
+        saltOutFile.write(salt);
+        saltOutFile.close();
+
+        SecretKeyFactory factory = SecretKeyFactory
+                .getInstance("PBKDF2WithHmacSHA1");
+        KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 65536,
+                256);
+        SecretKey secretKey = factory.generateSecret(keySpec);
+        SecretKey secret = new SecretKeySpec(secretKey.getEncoded(), "AES");
+
+        //
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secret);
+        AlgorithmParameters params = cipher.getParameters();
+
+        // iv adds randomness to the text and just makes the mechanism more
+        // secure
+        // used while initializing the cipher
+        // file to store the iv
+        FileOutputStream ivOutFile = new FileOutputStream(filename + "." + "iv.enc");
+        byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
+        ivOutFile.write(iv);
+        ivOutFile.close();
+
+        //file encryption
+        byte[] input = new byte[64];
+        int bytesRead;
+
+        while ((bytesRead = inFile.read(input)) != -1) {
+            byte[] output = cipher.update(input, 0, bytesRead);
+            if (output != null)
+                outFile.write(output);
+        }
+
+        byte[] output = cipher.doFinal();
+        if (output != null)
+            outFile.write(output);
+
+        inFile.close();
+        outFile.flush();
+        outFile.close();
+
+        System.out.println("File Encrypted.");
+    }
+
+    public void AESFileDecryption (String filename) throws Exception {
+
+            String password = "javapapers";
+
+            // reading the salt
+            // user should have secure mechanism to transfer the
+            // salt, iv and password to the recipient
+            FileInputStream saltFis = new FileInputStream(filename + ".salt.enc");
+            byte[] salt = new byte[8];
+            saltFis.read(salt);
+            saltFis.close();
+
+            // reading the iv
+            FileInputStream ivFis = new FileInputStream(filename + "." + "iv.enc");
+            byte[] iv = new byte[16];
+            ivFis.read(iv);
+            ivFis.close();
+
+            SecretKeyFactory factory = SecretKeyFactory
+                    .getInstance("PBKDF2WithHmacSHA1");
+            KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 65536,
+                    256);
+            SecretKey tmp = factory.generateSecret(keySpec);
+            SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+            // file decryption
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
+            FileInputStream fis = new FileInputStream(filename + ".encryptedfile.des");
+            FileOutputStream fos = new FileOutputStream(filename + ".decrypt");
+            byte[] in = new byte[64];
+            int read;
+            while ((read = fis.read(in)) != -1) {
+                byte[] output = cipher.update(in, 0, read);
+                if (output != null)
+                    fos.write(output);
+            }
+
+            byte[] output = cipher.doFinal();
+            if (output != null)
+                fos.write(output);
+            fis.close();
+            fos.flush();
+            fos.close();
+            System.out.println("File Decrypted.");
+        }
 
 
 }
