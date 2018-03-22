@@ -17,11 +17,11 @@ import java.util.List;
 
 public class FileHandler {
 
-    public static List<BufferedOutputStream> split(String filename) throws IOException
+    public static List<BufferedOutputStream> split(String filename, List<String> fileList) throws IOException
     {
         // open the file
         BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
-        List<BufferedOutputStream> listOfFile = new ArrayList<>();
+        List<BufferedOutputStream> listOfOutFileStream = new ArrayList<>();
 
         // get the file length
         File f = new File(filename);
@@ -34,7 +34,8 @@ public class FileHandler {
         {
             // open the output file
             BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename + "." + subfile));
-            listOfFile.add(out);
+            listOfOutFileStream.add(out);
+            fileList.add(filename + "." + subfile);
             // write the right amount of bytes
             if(fileSize %2 == 0){
                 for (long currentByte = 0; currentByte < chunkSize; currentByte++)
@@ -55,7 +56,7 @@ public class FileHandler {
 //            out.close();
         }
         if(in.read() != -1){
-            Log.i("File Split", "File split not completed.");
+            Log.e("File Split", "File split not completed.");
         }
 //        // loop for the last chunk (which may be smaller than the chunk size)
 //        if (fileSize != chunkSize * (subfile - 1))
@@ -75,6 +76,6 @@ public class FileHandler {
         // close the file
         in.close();
         Log.i("File Split", "Returning File List");
-        return listOfFile;
+        return listOfOutFileStream;
     }
 }

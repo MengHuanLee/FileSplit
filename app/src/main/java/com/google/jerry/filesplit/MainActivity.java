@@ -20,6 +20,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
     private Crypt crypt = new Crypt();
     private FileHandler fileHandle = new FileHandler();
-
+    private ArrayList<String> fileList;
     private String filename;
 
 
@@ -50,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         mPasswordText = findViewById(R.id.passwordText);
         mEncrypt = findViewById(R.id.buttonEncrypt);
         mDecrypt = findViewById(R.id.buttonDecrypt);
-
+        fileList = new ArrayList<>();
         mSelectSource.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -72,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 try {
-                    fileHandle.split(filename);
+                    fileHandle.split(filename, fileList);
                 } catch (Exception e){
                     Log.e("File", e.getMessage());
                     Toast.makeText(getBaseContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
@@ -93,6 +96,11 @@ public class MainActivity extends AppCompatActivity {
                 new EncryptInBG().execute(filename);
                 Log.i("Encrypt", "Doing encryption in background");
                 Toast.makeText(getBaseContext(),"Encrypting file...",Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(getApplicationContext(),GoogleDriveFileUploadActivity.class);
+                intent.putStringArrayListExtra("fileList", fileList);
+
+
+
             }
         });
 
@@ -328,41 +336,6 @@ public class MainActivity extends AppCompatActivity {
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
-
-    public String getDirPath(Context context, Uri uri){
-        ContentResolver contentResolver = context.getContentResolver();
-        Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri,
-                DocumentsContract.getTreeDocumentId(uri));
-
-
-        Cursor docCursor = contentResolver.query(docUri, new String[]{
-                DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
-        try {
-            while (docCursor.moveToNext()) {
-                //Log.d(TAG, "found doc =" + docCursor.getString(0) + ", mime=" + docCursor
-                //        .getString(1));
-                //mCurrentDirectoryUri = uri;
-
-                //mCreateDirectoryButton.setEnabled(true);
-            }
-        } finally {
-            closeQuietly(docCursor);
-        }
-        return docCursor.getString(0);
-    }
-
-    public void closeQuietly(AutoCloseable closeable) {
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (RuntimeException rethrown) {
-                throw rethrown;
-            } catch (Exception ignored) {
-            }
-        }
-    }
-
-
 
 
 }
