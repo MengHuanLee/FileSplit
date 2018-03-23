@@ -78,4 +78,10 @@ public class FileHandler {
         Log.i("File Split", "Returning File List");
         return listOfOutFileStream;
     }
+
+    public static void merge(String filename, List<String> fileList) throws IOException{
+
+        BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
+    }
+
 }
